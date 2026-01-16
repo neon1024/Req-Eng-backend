@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, BeforeInsert, BeforeUpdate } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, BeforeInsert, BeforeUpdate, ManyToOne, JoinColumn } from 'typeorm';
 import bcrypt from 'bcryptjs';
 
 export enum UserRole {
@@ -22,6 +22,14 @@ export class User {
 
   @Column({ type: 'enum', enum: UserRole, default: UserRole.PATIENT })
   role!: UserRole;
+
+  // For patients: assigned doctor (null = unassigned)
+  @Column({ nullable: true })
+  doctorId?: string;
+
+  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'doctorId' })
+  doctor?: User;
 
   @CreateDateColumn()
   createdAt!: Date;

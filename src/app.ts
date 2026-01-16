@@ -2,6 +2,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth.routes';
 import moodRoutes from './routes/mood.routes';
+import doctorRoutes from './routes/doctor.routes';
 
 const app = express();
 
@@ -12,6 +13,7 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/moods', moodRoutes);
+app.use('/api/doctor', doctorRoutes);
 
 // Health check
 app.get('/api/health', (_req: Request, res: Response) => {

@@ -20,16 +20,18 @@ src/
 ├── config/
 │   └── database.ts        # TypeORM PostgreSQL connection
 ├── entities/
-│   ├── user.entity.ts     # User entity (id, email, password, name, role)
-│   └── mood.entity.ts     # Mood entity (id, userId, level, note, date)
+│   ├── user.entity.ts     # User entity (id, email, password, name, role, doctorId)
+│   └── mood.entity.ts     # Mood entity (id, userId, rate, date)
 ├── middleware/
 │   └── auth.middleware.ts # JWT authentication & role authorization
 ├── controllers/
 │   ├── auth.controller.ts # Login logic
-│   └── mood.controller.ts # Mood tracking logic
+│   ├── mood.controller.ts # Mood tracking logic
+│   └── doctor.controller.ts # Doctor-patient management
 ├── routes/
 │   ├── auth.routes.ts     # Auth endpoints
-│   └── mood.routes.ts     # Mood endpoints
+│   ├── mood.routes.ts     # Mood endpoints
+│   └── doctor.routes.ts   # Doctor endpoints
 └── scripts/
     └── seedUsers.ts       # Database seeder
 ```
@@ -104,6 +106,17 @@ npm start
 | DELETE | `/api/moods` | Delete today's mood | Yes | Patient |
 
 > **Note:** Only today's mood can be updated or deleted. Historical moods are read-only. Only patients can access mood CRUD endpoints.
+
+### Doctor (Patient Management)
+
+| Method | Endpoint | Description | Auth | Role |
+|--------|----------|-------------|------|------|
+| GET | `/api/doctor/patients` | Get my patients + unassigned patients | Yes | Doctor |
+| POST | `/api/doctor/patients/:patientId/assign` | Assign patient to me | Yes | Doctor |
+| DELETE | `/api/doctor/patients/:patientId/assign` | Unassign patient from me | Yes | Doctor |
+| GET | `/api/doctor/patients/:patientId/moods` | Get patient's mood history | Yes | Doctor |
+
+> **Note:** Doctors can only view mood history for patients assigned to them.
 
 ### Health
 
@@ -233,8 +246,15 @@ curl -X DELETE http://localhost:3000/api/moods \
 
 ## User Roles
 
-- `doctor`
-- `patient`
+- `doctor` - Can manage patients, view their mood history
+- `patient` - Can track daily moods, assigned to a doctor
+
+## Doctor-Patient Relationship
+
+- Patients can be **unassigned** (no doctor) or **assigned** to one doctor
+- Doctors can see all unassigned patients and assign them to themselves
+- Doctors can only view mood history for their assigned patients
+- Doctors can unassign patients from themselves
 
 ## Scripts
 
