@@ -16,34 +16,35 @@ export const login = async (req: Request, res: Response) => {
         const { email, password } = req.body;
 
         if (!email || !password) {
-            return res.status(400).json({ message: 'Email and password are required' });
+            return res.status(400).json({ error: 'Email and password are required', message: 'Email and password are required' });
         }
 
         const userRepository = AppDataSource.getRepository(User);
         const user = await userRepository.findOne({ where: { email } });
 
         if (!user) {
-            return res.status(401).json({ message: 'Invalid credentials' });
+            return res.status(401).json({ error: 'Invalid credentials', message: 'Invalid credentials' });
         }
 
         const isPasswordValid = await user.comparePassword(password);
         if (!isPasswordValid) {
-            return res.status(401).json({ message: 'Invalid credentials' });
+            return res.status(401).json({ error: 'Invalid credentials', message: 'Invalid credentials' });
         }
 
         const token = generateToken(user.id);
 
         res.json({
+            error: null,
             message: 'Login successful',
             token,
             user: user.toJSON()
         });
     } catch (error) {
         console.error('Login error:', error);
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({ error: 'Server error', message: 'Server error' });
     }
 };
 
 export const getProfile = async (req: AuthRequest, res: Response) => {
-    res.json({ user: req.user?.toJSON() });
+    res.json({ error: null, user: req.user?.toJSON() });
 };

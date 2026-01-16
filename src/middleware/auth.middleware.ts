@@ -16,7 +16,7 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
         const authHeader = req.headers.authorization;
 
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return res.status(401).json({ message: 'No token provided' });
+            return res.status(401).json({ error: 'No token provided', message: 'No token provided' });
         }
 
         const token = authHeader.split(' ')[1];
@@ -26,20 +26,20 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
         const user = await userRepository.findOne({ where: { id: decoded.userId } });
 
         if (!user) {
-            return res.status(401).json({ message: 'User not found' });
+            return res.status(401).json({ error: 'User not found', message: 'User not found' });
         }
 
         req.user = user;
         next();
     } catch {
-        return res.status(401).json({ message: 'Invalid token' });
+        return res.status(401).json({ error: 'Invalid token', message: 'Invalid token' });
     }
 };
 
 export const authorize = (...roles: UserRole[]) => {
     return (req: AuthRequest, res: Response, next: NextFunction) => {
         if (!req.user || !roles.includes(req.user.role)) {
-            return res.status(403).json({ message: 'Access denied' });
+            return res.status(403).json({ error: 'Access denied', message: 'Access denied' });
         }
         next();
     };
