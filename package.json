@@ -8,6 +8,7 @@
     "start": "node dist/server.js",
     "dev": "ts-node-dev --respawn src/server.ts",
     "seed": "ts-node src/scripts/seedUsers.ts",
+    "seed:moods": "ts-node src/scripts/seedMoods.ts",
     "test": "node -r dotenv/config node_modules/@cucumber/cucumber/bin/cucumber-js --require-module ts-node/register --require features/step-definitions/**/*.ts --require features/support/**/*.ts features/**/*.feature"
   },
   "keywords": [],

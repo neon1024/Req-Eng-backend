@@ -20,13 +20,16 @@ src/
 ├── config/
 │   └── database.ts        # TypeORM PostgreSQL connection
 ├── entities/
-│   └── user.entity.ts     # User entity (id, email, password, name, role)
+│   ├── user.entity.ts     # User entity (id, email, password, name, role)
+│   └── mood.entity.ts     # Mood entity (id, userId, level, note, date)
 ├── middleware/
 │   └── auth.middleware.ts # JWT authentication & role authorization
 ├── controllers/
-│   └── auth.controller.ts # Login logic
+│   ├── auth.controller.ts # Login logic
+│   └── mood.controller.ts # Mood tracking logic
 ├── routes/
-│   └── auth.routes.ts     # Auth endpoints
+│   ├── auth.routes.ts     # Auth endpoints
+│   └── mood.routes.ts     # Mood endpoints
 └── scripts/
     └── seedUsers.ts       # Database seeder
 ```
@@ -90,6 +93,18 @@ npm start
 | POST | `/api/auth/login` | Login with email & password | No |
 | GET | `/api/auth/profile` | Get current user profile | Yes |
 
+### Moods
+
+| Method | Endpoint | Description | Auth | Role |
+|--------|----------|-------------|------|------|
+| GET | `/api/moods/config` | Get mood configuration (emojis, rate range) | No | - |
+| GET | `/api/moods` | Get all moods for current user | Yes | Patient |
+| POST | `/api/moods` | Add mood for today | Yes | Patient |
+| PUT | `/api/moods` | Update today's mood | Yes | Patient |
+| DELETE | `/api/moods` | Delete today's mood | Yes | Patient |
+
+> **Note:** Only today's mood can be updated or deleted. Historical moods are read-only. Only patients can access mood CRUD endpoints.
+
 ### Health
 
 | Method | Endpoint | Description | Auth |
@@ -128,6 +143,93 @@ Include the JWT token in the Authorization header:
 curl http://localhost:3000/api/auth/profile \
   -H "Authorization: Bearer <your_token>"
 ```
+
+### Get Mood Config
+
+```bash
+curl http://localhost:3000/api/moods/config
+```
+
+Response:
+```json
+{
+  "error": null,
+  "config": {
+    "rate": { "min": 1, "max": 10 }
+  }
+}
+```
+
+### Get All Moods
+
+```bash
+curl http://localhost:3000/api/moods \
+  -H "Authorization: Bearer <patient_token>"
+```
+
+Response:
+```json
+{
+  "error": null,
+  "moods": [
+    {
+      "id": "uuid",
+      "userId": "uuid",
+      "rate": 7,
+      "date": "2026-01-16",
+      "createdAt": "2026-01-16T10:00:00.000Z"
+    }
+  ],
+  "todayTracked": true,
+  "todayMood": { ... }
+}
+```
+
+### Add Mood
+
+```bash
+curl -X POST http://localhost:3000/api/moods \
+  -H "Authorization: Bearer <patient_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"rate": 7}'
+```
+
+Response:
+```json
+{
+  "error": null,
+  "message": "Mood added successfully",
+  "mood": {
+    "id": "uuid",
+    "userId": "uuid",
+    "rate": 7,
+    "date": "2026-01-16",
+    "createdAt": "2026-01-16T10:00:00.000Z"
+  }
+}
+```
+
+### Update Today's Mood
+
+```bash
+curl -X PUT http://localhost:3000/api/moods \
+  -H "Authorization: Bearer <patient_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"rate": 9}'
+```
+
+### Delete Today's Mood
+
+```bash
+curl -X DELETE http://localhost:3000/api/moods \
+  -H "Authorization: Bearer <patient_token>"
+```
+
+## Mood Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `rate` | Integer (1-10) | Mood rating from 1 (worst) to 10 (best) |
 
 ## User Roles
 

@@ -1,5 +1,6 @@
 import { DataSource } from 'typeorm';
 import { User } from '../entities/user.entity';
+import { Mood } from '../entities/mood.entity';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -10,5 +11,5 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_NAME || 'req_eng_db',
   synchronize: true, // Set to false in production
   logging: false,
-  entities: [User],
+  entities: [User, Mood],
 });
