@@ -71,9 +71,18 @@ CREATE DATABASE req_eng_db;
 npm run seed
 ```
 
-This creates two test users:
-- **Doctor**: `doctor@example.com` / `doctor123`
-- **Patient**: `patient@example.com` / `patient123`
+This creates test users:
+
+**Doctors:**
+- `doctor@example.com` / `doctor123`
+- `doctor2@example.com` / `doctor123`
+
+**Patients (all use password `patient123`):**
+- `patient@example.com` - Jane Doe
+- `patient2@example.com` - Michael Brown
+- `patient3@example.com` - Emily Davis
+- `patient4@example.com` - David Wilson
+- `patient5@example.com` - Lisa Anderson
 
 ### 5. Run the server
 
@@ -238,11 +247,104 @@ curl -X DELETE http://localhost:3000/api/moods \
   -H "Authorization: Bearer <patient_token>"
 ```
 
+### Get Patients (Doctor)
+
+```bash
+curl http://localhost:3000/api/doctor/patients \
+  -H "Authorization: Bearer <doctor_token>"
+```
+
+Response:
+```json
+{
+  "error": null,
+  "myPatients": [
+    {
+      "id": "uuid",
+      "email": "patient@example.com",
+      "name": "Jane Doe",
+      "role": "patient",
+      "moodScore": 3.5,
+      "moodCount": 7
+    },
+    {
+      "id": "uuid",
+      "name": "David Wilson",
+      "moodScore": 6.2,
+      "moodCount": 5
+    }
+  ],
+  "unassignedPatients": [
+    {
+      "id": "uuid",
+      "name": "New Patient",
+      "moodScore": null,
+      "moodCount": 0
+    }
+  ]
+}
+```
+
+> **Note:** Patients are sorted by `moodScore` ascending (lowest/worst first). Patients with no moods (`null`) appear at the end.
+
+### Assign Patient (Doctor)
+
+```bash
+curl -X POST http://localhost:3000/api/doctor/patients/<patientId>/assign \
+  -H "Authorization: Bearer <doctor_token>"
+```
+
+Response:
+```json
+{
+  "error": null,
+  "message": "Patient assigned successfully",
+  "patient": { ... }
+}
+```
+
+### Unassign Patient (Doctor)
+
+```bash
+curl -X DELETE http://localhost:3000/api/doctor/patients/<patientId>/assign \
+  -H "Authorization: Bearer <doctor_token>"
+```
+
+### Get Patient Mood History (Doctor)
+
+```bash
+curl http://localhost:3000/api/doctor/patients/<patientId>/moods \
+  -H "Authorization: Bearer <doctor_token>"
+```
+
+Response:
+```json
+{
+  "error": null,
+  "patient": {
+    "id": "uuid",
+    "name": "Jane Doe",
+    "email": "patient@example.com"
+  },
+  "moods": [
+    { "id": "uuid", "rate": 7, "date": "2026-01-16" },
+    { "id": "uuid", "rate": 5, "date": "2026-01-15" }
+  ]
+}
+```
+
 ## Mood Fields
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `rate` | Integer (1-10) | Mood rating from 1 (worst) to 10 (best) |
+
+## Patient Fields (in Doctor API)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `moodScore` | Float or null | Average mood rating (1.0-10.0), null if no moods |
+| `moodCount` | Integer | Total number of mood entries |
 
 ## User Roles
 

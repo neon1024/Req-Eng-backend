@@ -5,6 +5,45 @@ import { Mood } from '../entities/mood.entity';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { IsNull } from 'typeorm';
 
+// Calculate average mood score for a patient
+const calculateMoodScore = async (userId: string): Promise<{ avgScore: number | null; moodCount: number }> => {
+    const moodRepository = AppDataSource.getRepository(Mood);
+
+    const result = await moodRepository
+        .createQueryBuilder('mood')
+        .select('AVG(mood.rate)', 'avgScore')
+        .addSelect('COUNT(*)', 'moodCount')
+        .where('mood.userId = :userId', { userId })
+        .getRawOne();
+
+    return {
+        avgScore: result.avgScore ? parseFloat(parseFloat(result.avgScore).toFixed(1)) : null,
+        moodCount: parseInt(result.moodCount) || 0
+    };
+};
+
+// Add mood score to patient data
+const addScoreToPatients = async (patients: User[]) => {
+    const patientsWithScore = await Promise.all(
+        patients.map(async (patient) => {
+            const { avgScore, moodCount } = await calculateMoodScore(patient.id);
+            return {
+                ...patient.toJSON(),
+                moodScore: avgScore,
+                moodCount
+            };
+        })
+    );
+
+    // Sort by score ascending (lowest/worst first), null scores at the end
+    return patientsWithScore.sort((a, b) => {
+        if (a.moodScore === null && b.moodScore === null) return 0;
+        if (a.moodScore === null) return 1;
+        if (b.moodScore === null) return -1;
+        return a.moodScore - b.moodScore;
+    });
+};
+
 // Get all patients: my assigned + unassigned
 export const getPatients = async (req: AuthRequest, res: Response) => {
     try {
@@ -13,20 +52,22 @@ export const getPatients = async (req: AuthRequest, res: Response) => {
 
         // Get my assigned patients
         const myPatients = await userRepository.find({
-            where: { role: UserRole.PATIENT, doctorId },
-            order: { name: 'ASC' }
+            where: { role: UserRole.PATIENT, doctorId }
         });
 
         // Get unassigned patients
         const unassignedPatients = await userRepository.find({
-            where: { role: UserRole.PATIENT, doctorId: IsNull() },
-            order: { name: 'ASC' }
+            where: { role: UserRole.PATIENT, doctorId: IsNull() }
         });
+
+        // Add scores and sort by mood score (ascending - worst first)
+        const myPatientsWithScore = await addScoreToPatients(myPatients);
+        const unassignedPatientsWithScore = await addScoreToPatients(unassignedPatients);
 
         res.json({
             error: null,
-            myPatients: myPatients.map(p => p.toJSON()),
-            unassignedPatients: unassignedPatients.map(p => p.toJSON())
+            myPatients: myPatientsWithScore,
+            unassignedPatients: unassignedPatientsWithScore
         });
     } catch (error) {
         console.error('Get patients error:', error);
